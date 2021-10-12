@@ -23,7 +23,7 @@ logger.handlers = gunicorn_logger.handlers
 logger.setLevel(gunicorn_logger.level)
 
 tracking_click_endpoint = 'http://internal-private-1191134035.us-east-2.elb.amazonaws.com/tracking/click'
-now_timestamp_iso = datetime.datetime.now().timestamp().isoformat()
+
 
 if __name__ != "main":
     logger.setLevel(gunicorn_logger.level)
@@ -60,6 +60,7 @@ def table():
 @app.get("/click", response_class=RedirectResponse, status_code=302)
 async def click(query_id: str, impression_id: str):
     conn = get_db_conn()
+    now_timestamp_iso = datetime.datetime.now().isoformat()
     
     # click
     dynamodb = boto3.resource('dynamodb', region_name='us-east-2')
@@ -94,11 +95,11 @@ async def click(query_id: str, impression_id: str):
         category = cursor.fetchone()
         
         sql_query5 = """SELECT id FROM ads WHERE url = %s"""
-        cursor.execute(sql_query4, (advertiser_url))
+        cursor.execute(sql_query5, (advertiser_url))
         ad_id = cursor.fetchone()
         
         sql_query6 = """SELECT zip_code FROM campaign_targeting WHERE campaign_id = %s"""
-        cursor.execute(sql_query4, (campaign_id))
+        cursor.execute(sql_query6, (campaign_id))
         zip_code = cursor.fetchone()
     
     tracking_click_params = {
@@ -111,7 +112,7 @@ async def click(query_id: str, impression_id: str):
         "advertiser_campaign_id": campaign_id,
         "category": category,
         "ad_id": ad_id,
-        "zip_code": zip_code,
+        "zip_code": str(zip_code),
         "advertiser_price": 0.0,
         "publisher_price": 0.0,
         "position": 0
