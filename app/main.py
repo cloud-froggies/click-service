@@ -78,24 +78,24 @@ async def click(query_id: str, impression_id: str):
     
     # using db connection
     with conn.cursor(pymysql.cursors.DictCursor) as cursor:
-        sql_query1 = """SELECT advertiser_id FROM ads WHERE advertiser_url = %s"""
-        cursor.execute(sql_query1, (advertiser_url))
-        advertiser_id = cursor.fetchone()
-        
-        sql_query2 = """SELECT publisher_id FROM publisher_exclusions WHERE advertiser_id = %s"""
-        cursor.execute(sql_query2, (advertiser_id))
-        publisher_id = cursor.fetchone()
-        
-        sql_query3 = """SELECT campaign_id FROM ads WHERE advertiser_url = %s"""
-        cursor.execute(sql_query3, (advertiser_url))
+        sql_query = """SELECT campaign_id FROM ads WHERE advertiser_url = %s"""
+        cursor.execute(sql_query, (advertiser_url))
         campaign_id = cursor.fetchone()
         
+        sql_query = """SELECT advertiser_id FROM advertiser_campaigns WHERE id = %s"""
+        cursor.execute(sql_query, (campaign_id))
+        advertiser_id = cursor.fetchone()
+        
+        sql_query = """SELECT publisher_id FROM publisher_exclusions WHERE advertiser_id = %s"""
+        cursor.execute(sql_query, (advertiser_id))
+        publisher_id = cursor.fetchone()
+        
         sql_query4 = """SELECT category FROM advertiser_campaigns WHERE id = %s"""
-        cursor.execute(sql_query4, (campaign_id))
+        cursor.execute(sql_query, (campaign_id))
         category = cursor.fetchone()
         
-        sql_query5 = """SELECT id FROM ads WHERE url = %s"""
-        cursor.execute(sql_query5, (advertiser_url))
+        sql_query = """SELECT id FROM ads WHERE url = %s"""
+        cursor.execute(sql_query, (advertiser_url))
         ad_id = cursor.fetchone()
         
         sql_query6 = """SELECT zip_code FROM campaign_targeting WHERE campaign_id = %s"""
