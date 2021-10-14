@@ -3,8 +3,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.logger import logger
 from fastapi.param_functions import Query
 from fastapi.responses import RedirectResponse
-import json
 
+import json
 import logging
 import requests
 import boto3
@@ -26,10 +26,12 @@ logger.setLevel(gunicorn_logger.level)
 
 tracking_click_endpoint = 'http://internal-private-1191134035.us-east-2.elb.amazonaws.com/tracking/click'
 
+
 if __name__ != "main":
     logger.setLevel(gunicorn_logger.level)
 else:
     logger.setLevel(logging.DEBUG)
+
 
 def get_db_conn():
     try:
@@ -39,10 +41,12 @@ def get_db_conn():
         logger.error("ERROR: Unexpected error: Could not connect to MySQL instance.")
         logger.error(e)
         raise
+
     
 @app.get("/")
 def read_root():
     return {"Service": "Click"}
+
 
 @app.get("/table")
 def table():
@@ -124,27 +128,37 @@ def table():
 
 @app.get("/click", response_class=RedirectResponse, status_code=302)
 async def click(query_id: str, impression_id: str):
+    # redirectioning
+    dynamodb = boto3.resource('dynamodb', region_name='us-east-2')
+    table = dynamodb.Table('sessions')
+    response = table.get_item(
+        Key={
+            'query_id': query_id,
+            'impression_id': impression_id
+        }
+    )
+    advertiser_url = response['Item']['advertiser_url']
+    
+    # click tracking
     try:
         conn = get_db_conn()
         now_timestamp_iso = datetime.datetime.now().isoformat()
-
-        # track click
         click_id = str(uuid.uuid4())
 
         tracking_click_params_dummy = {
             "query_id": str(query_id),
             "impression_id": str('impression_id'),
-            "click_id": click_id,
+            "click_id": str(click_id),
             "timestamp": str(now_timestamp_iso),
             "publisher_id": str(9999),
             "advertiser_id" : str(9999),
             "advertiser_campaign_id": str(9999),
             "category": str(9999),
             "ad_id": str(9999),
-            "zip_code": str('0000'),
+            "zip_code": str('00000'),
             "advertiser_price": str(99.99),
             "publisher_price": str(99.99),
-            "position": str(9999)
+            "position": str(3)
         }
         
         conn = http.client.HTTPConnection(host=tracking_click_endpoint)
@@ -157,4 +171,4 @@ async def click(query_id: str, impression_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    return 'Success post'
+    return advertiser_url
