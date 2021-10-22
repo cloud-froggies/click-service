@@ -1,7 +1,5 @@
-from typing import Optional, List
 from fastapi import FastAPI, HTTPException
 from fastapi.logger import logger
-from fastapi.param_functions import Query
 from fastapi.responses import RedirectResponse
 
 import json
@@ -12,7 +10,6 @@ import os
 import uuid
 import datetime
 import pymysql
-import http.client
 
 DB_ENDPOINT = os.environ.get('db_endpoint')
 DB_ADMIN_USER = os.environ.get('db_admin_user')
@@ -161,12 +158,14 @@ async def click(query_id: str, impression_id: str):
             "position": str(3)
         }
         
-        conn = http.client.HTTPConnection(host=tracking_click_endpoint)
-        headers = {'Content-type': 'application/json'}
-        json_data = json.dumps(tracking_click_params_dummy)
-        conn.request('POST', '/', json_data, headers)
-        response = conn.getresponse()
-        response.read().decode()
+        # conn = http.client.HTTPConnection(host=tracking_click_endpoint)
+        # headers = {'Content-type': 'application/json'}
+        # json_data = json.dumps(tracking_click_params_dummy)
+        # conn.request('POST', '/', json_data, headers)
+        # response = conn.getresponse()
+        # response.read().decode()
+        tracking_click_response = requests.post(tracking_click_endpoint, json=tracking_click_params_dummy)
+        logger.error(tracking_click_response)
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
