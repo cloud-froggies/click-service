@@ -58,7 +58,6 @@ def table():
 @app.get("/click", response_class=RedirectResponse, status_code=302)
 async def click(query_id: str, impression_id: str):
     try:
-        conn = get_db_conn()
         now_timestamp_iso = datetime.datetime.now().isoformat()
         
         # click
@@ -77,6 +76,9 @@ async def click(query_id: str, impression_id: str):
         category = response['Item']['category']
         ad_id = response['Item']['ad_id']
         zip_code = response['Item']['zip_code']
+        advertiser_price = response['Item']["advertiser_price"]
+        publisher_price = response['Item']["publisher_price"]
+        position = response['Item']["position"]
 
         # track click
         click_id = str(uuid.uuid4())
@@ -108,22 +110,23 @@ async def click(query_id: str, impression_id: str):
         #     zip_code = cursor.fetchone()
         
         tracking_click_params = {
-            "query_id": query_id,
-            "impression_id": impression_id,
-            "click_id": click_id,
+            "query_id": str(query_id),
+            "impression_id": str(impression_id),
+            "click_id": str(click_id),
             "timestamp": now_timestamp_iso,
-            "publisher_id": publisher_id,
-            "advertiser_id": advertiser_id,
-            "advertiser_campaign_id": campaign_id,
-            "category": category,
-            "ad_id": ad_id,
+            "publisher_id": int(publisher_id),
+            "advertiser_id": int(advertiser_id),
+            "advertiser_campaign_id": int(campaign_id),
+            "category": int(category),
+            "ad_id": int(ad_id),
             "zip_code": str(zip_code),
-            "advertiser_price": 0.0,
-            "publisher_price": 0.0,
-            "position": 0
+            "advertiser_price": float(advertiser_price),
+            "publisher_price": float(publisher_price),
+            "position": int(position)
         }
         
-        tracking_click_response = requests.get(tracking_click_endpoint, params=tracking_click_params)
+        tracking_click_response = requests.get(tracking_click_endpoint, json=tracking_click_params)
+
         logger.error(tracking_click_response)
     
     except Exception as e:
