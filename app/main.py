@@ -58,7 +58,7 @@ def table():
 @app.get("/click", response_class=RedirectResponse, status_code=302)
 async def click(query_id: str, impression_id: str):
     try:
-        now_timestamp_iso = datetime.datetime.now().isoformat()
+        now_timestamp_iso = datetime.datetime.now()
         
         # click
         dynamodb = boto3.resource('dynamodb', region_name='us-east-2')
@@ -113,7 +113,7 @@ async def click(query_id: str, impression_id: str):
             "query_id": str(query_id),
             "impression_id": str(impression_id),
             "click_id": str(click_id),
-            "timestamp": now_timestamp_iso,
+            "timestamp": str(now_timestamp_iso),
             "publisher_id": int(publisher_id),
             "advertiser_id": int(advertiser_id),
             "advertiser_campaign_id": int(campaign_id),
@@ -125,8 +125,8 @@ async def click(query_id: str, impression_id: str):
             "position": int(position)
         }
         
-        tracking_click_response = requests.get(tracking_click_endpoint, json=tracking_click_params)
-
+        tracking_click_response = requests.post(tracking_click_endpoint, json=tracking_click_params)
+        tracking_click_response.raise_for_status()
         logger.error(tracking_click_response)
     
     except Exception as e:
