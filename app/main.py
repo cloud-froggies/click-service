@@ -11,11 +11,6 @@ import uuid
 import datetime
 import pymysql
 
-# DB_ENDPOINT = os.environ.get('db_endpoint')
-# DB_ADMIN_USER = os.environ.get('db_admin_user')
-# DB_ADMIN_PASSWORD = os.environ.get('db_admin_password')
-# DB_NAME = os.environ.get('db_name')
-
 app = FastAPI(title='Click Service', version='0.1')
 gunicorn_logger = logging.getLogger('gunicorn.error')
 logger.handlers = gunicorn_logger.handlers
@@ -28,16 +23,6 @@ if __name__ != "main":
     logger.setLevel(gunicorn_logger.level)
 else:
     logger.setLevel(logging.DEBUG)
-
-
-# def get_db_conn():
-#     try:
-#         conn = pymysql.connect(host=DB_ENDPOINT, user=DB_ADMIN_USER, passwd=DB_ADMIN_PASSWORD, db=DB_NAME, connect_timeout=5)
-#         return conn
-#     except pymysql.MySQLError as e:
-#         logger.error("ERROR: Unexpected error: Could not connect to MySQL instance.")
-#         logger.error(e)
-#         raise
 
     
 @app.get("/")
@@ -60,7 +45,7 @@ async def click(query_id: str, impression_id: str):
     try:
         now_timestamp_iso = datetime.datetime.now()
         
-        # click
+        # get the click's cache info
         dynamodb = boto3.resource('dynamodb', region_name='us-east-2')
         table = dynamodb.Table('sessions')
         response = table.get_item(
@@ -80,34 +65,8 @@ async def click(query_id: str, impression_id: str):
         publisher_price = response['Item']["publisher_price"]
         position = response['Item']["position"]
 
-        # track click
+        # track the click
         click_id = str(uuid.uuid4())
-        
-        # # using db connection
-        # with conn.cursor(pymysql.cursors.DictCursor) as cursor:
-        #     sql_query = """SELECT campaign_id FROM ads WHERE advertiser_url = %s"""
-        #     cursor.execute(sql_query, (advertiser_url))
-        #     campaign_id = cursor.fetchone()
-            
-        #     sql_query = """SELECT advertiser_id FROM advertiser_campaigns WHERE id = %s"""
-        #     cursor.execute(sql_query, (campaign_id))
-        #     advertiser_id = cursor.fetchone()
-            
-        #     sql_query = """SELECT publisher_id FROM publisher_exclusions WHERE advertiser_id = %s"""
-        #     cursor.execute(sql_query, (advertiser_id))
-        #     publisher_id = cursor.fetchone()
-            
-        #     sql_query4 = """SELECT category FROM advertiser_campaigns WHERE id = %s"""
-        #     cursor.execute(sql_query4, (campaign_id))
-        #     category = cursor.fetchone()
-            
-        #     sql_query = """SELECT id FROM ads WHERE url = %s"""
-        #     cursor.execute(sql_query, (advertiser_url))
-        #     ad_id = cursor.fetchone()
-            
-        #     sql_query6 = """SELECT zip_code FROM campaign_targeting WHERE campaign_id = %s"""
-        #     cursor.execute(sql_query6, (campaign_id))
-        #     zip_code = cursor.fetchone()
         
         tracking_click_params = {
             "query_id": str(query_id),
